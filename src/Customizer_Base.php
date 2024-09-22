@@ -74,6 +74,7 @@ abstract class Customizer_Base {
     public function __construct() {
         \add_filter( 'xwc_product_types', array( $this, 'custom_product_types' ), 100, 1 );
         \add_filter( 'xwc_product_opts', array( $this, 'custom_product_opts' ), 100, 1 );
+        \add_filter( 'xwc_product_tabs', array( $this, 'custom_product_tabs' ), 100, 1 );
 
         static::$init ??= $this->init();
     }
@@ -331,6 +332,24 @@ abstract class Customizer_Base {
     }
 
     /**
+     * Get the product tabs array
+     *
+     * @param  array $tabs Product tabs array.
+     * @return array<array{
+     *     id: string,
+     *     key?: string,
+     *     label: string,
+     *     icon?: string,
+     *     prio?: int,
+     *     panel?: string
+     *     for?: string|array<string>
+     *   }>
+     */
+    public function custom_product_tabs( array $tabs ): array {
+        return $tabs;
+    }
+
+    /**
      * Initializes the product tabs array
      *
      * @return array
@@ -338,7 +357,8 @@ abstract class Customizer_Base {
     final protected function init_product_tabs(): array {
         $get = static fn( $a ) => \wp_filter_object_list( $a, array( 'tabs' => array() ), 'not', 'tabs' );
 
-        $tabs = \array_merge( $get( static::$types ), $get( static::$opts ) );
+        $tabs = \apply_filters( 'xwc_product_tabs', array() );
+        $tabs = \array_merge( $get( static::$types ), $get( static::$opts ), $tabs );
         $tabs = $this->parse_product_tabs( $tabs );
 
         return $tabs;
@@ -354,6 +374,7 @@ abstract class Customizer_Base {
      *     label: string,
      *     icon?: string,
      *     prio?: int,
+     *     panel?: string
      *   }>> $all_tabs
      * @return array
      */
@@ -368,6 +389,7 @@ abstract class Customizer_Base {
                     'icon'     => $tab['icon'] ?? '',
                     'id'       => $tab['id'],
                     'label'    => $tab['label'],
+                    'panel'    => \wc_string_to_array( $tab['panel'] ?? 'woocommerce_options_panel' ),
                     'priority' => $tab['prio'] ?? 21,
                     'target'   => "{$tab['id']}_product_data",
                 );

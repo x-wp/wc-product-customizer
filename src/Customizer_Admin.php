@@ -43,6 +43,7 @@ final class Customizer_Admin {
      *   priority: int,
      *   target: string,
      *   id: string,
+     *   panel: array<string>,
      * }>
      */
     private array $tabs;
@@ -141,14 +142,19 @@ final class Customizer_Admin {
      * Add panels for the custom product tabs.
      */
     public function add_panels(): void {
-        foreach ( \array_keys( $this->tabs ) as $tab ) {
+        foreach ( $this->tabs as $key => $tab ) {
+            $classes = array( 'panel' );
+            $classes = \array_unique( \array_merge( $tab['panel'], $classes ) );
+            $classes = \array_map( 'sanitize_html_class', $classes );
+
             \printf(
-                '<div id="%1$s" class="panel woocommerce_options_panel" style="%2$s">',
+                '<div id="%1$s" class="%2$s" style="%3$s">',
                 \esc_attr( $tab['target'] ),
+                \esc_attr( \implode( ' ', $classes ) ),
                 \esc_attr( 'display: none;' ),
             );
 
-            \do_action( "xwc_product_options_{$tab}" );
+            \do_action( "xwc_product_options_{$key}" );
 
             echo '</div>';
         }
