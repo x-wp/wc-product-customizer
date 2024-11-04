@@ -218,6 +218,10 @@ final class Customizer_Admin {
 		}
 		$opt_groups = \array_values( \array_filter( $opt_groups ) );
 
+        if ( ! $opt_groups || ! \array_keys( $this->opts ) ) {
+            return;
+        }
+
 		$script = <<<'JS'
             jQuery(($) => {
                 const toggleVisibility = ($show, $hide, isChecked = true) => {
@@ -249,6 +253,7 @@ final class Customizer_Admin {
         //phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 		\printf(
             <<<'HTML'
+                <!-- XWC_Customizer JS -->
                 <script>
                     var utilAdditionalTypes = %s;
                     var utilAdditionalOpts = %s;

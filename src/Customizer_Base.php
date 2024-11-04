@@ -27,6 +27,24 @@ abstract class Customizer_Base {
     protected const DEFAULT_OPTS = array( 'virtual', 'downloadable' );
 
     /**
+     * Filters to hook into
+     *
+     * @var array<string,string>
+     */
+    private const FILTERS = array(
+        'xwc_product_opts'  => 'custom_product_opts',
+        'xwc_product_tabs'  => 'custom_product_tabs',
+        'xwc_product_types' => 'custom_product_types',
+    );
+
+    /**
+     * Customizer priority
+     *
+     * @var int
+     */
+    protected int $priority = 100;
+
+    /**
      * Customizer admin instance
      *
      * @var Customizer_Admin|null
@@ -72,9 +90,9 @@ abstract class Customizer_Base {
      * Class constructor
      */
     public function __construct() {
-        \add_filter( 'xwc_product_types', array( $this, 'custom_product_types' ), 100, 1 );
-        \add_filter( 'xwc_product_opts', array( $this, 'custom_product_opts' ), 100, 1 );
-        \add_filter( 'xwc_product_tabs', array( $this, 'custom_product_tabs' ), 100, 1 );
+        foreach ( self::FILTERS as $hook => $method ) {
+            \add_filter( $hook, array( $this, $method ), $this->priority, 1 );
+        }
 
         static::$init ??= $this->init();
     }
@@ -355,10 +373,15 @@ abstract class Customizer_Base {
      * @return array
      */
     final protected function init_product_tabs(): array {
-        $get = static fn( $a ) => \wp_filter_object_list( $a, array( 'tabs' => array() ), 'not', 'tabs' );
+        $get = static fn( $a ) => \array_values(
+            \wp_filter_object_list( $a, array( 'tabs' => array() ), 'not', 'tabs' ),
+        );
 
-        $tabs = \apply_filters( 'xwc_product_tabs', array() );
-        $tabs = \array_merge( $get( static::$types ), $get( static::$opts ), $tabs );
+        $tabs = \array_merge(
+            \apply_filters( 'xwc_product_tabs', array() ),
+            ...$get( static::$types ),
+            ...$get( static::$opts ),
+		);
         $tabs = $this->parse_product_tabs( $tabs );
 
         return $tabs;
@@ -378,23 +401,22 @@ abstract class Customizer_Base {
      *   }>> $all_tabs
      * @return array
      */
-    final protected function parse_product_tabs( array $all_tabs ): array {
+    final protected function parse_product_tabs( array $tabs ): array {
         $parsed = array();
-        foreach ( $all_tabs as $type_opt => $tabs ) {
-            foreach ( $tabs as $tab ) {
-                $key = $tab['key'] ?? $tab['id'];
 
-                $parsed[ $key ] = array(
-                    'class'    => $this->parse_opt_for( $tab['for'] ?? '', $type_opt ),
-                    'icon'     => $tab['icon'] ?? '',
-                    'id'       => $tab['id'],
-                    'label'    => $tab['label'],
-                    'panel'    => \wc_string_to_array( $tab['panel'] ?? 'woocommerce_options_panel' ),
-                    'priority' => $tab['prio'] ?? 21,
-                    'target'   => "{$tab['id']}_product_data",
-                );
-            }
-        }
+		foreach ( $tabs as $tab ) {
+			$key = $tab['key'] ?? $tab['id'];
+
+			$parsed[ $key ] = array(
+				'class'    => $this->parse_opt_for( $tab['for'] ?? '' ),
+				'icon'     => $tab['icon'] ?? '',
+				'id'       => $tab['id'],
+				'label'    => $tab['label'],
+				'panel'    => \wc_string_to_array( $tab['panel'] ?? 'woocommerce_options_panel' ),
+				'priority' => $tab['prio'] ?? 21,
+				'target'   => "{$tab['id']}_product_data",
+			);
+		}
 
         return $parsed;
     }
