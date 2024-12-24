@@ -282,7 +282,7 @@ final class Customizer_Admin {
                 continue;
             }
 
-            $product->update_meta_data( $key, $value );
+            $product->update_meta_data( "_{$key}", $value );
 		}
 	}
 }
