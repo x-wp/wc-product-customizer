@@ -218,7 +218,7 @@ final class Customizer_Admin {
 		}
 		$opt_groups = \array_values( \array_filter( $opt_groups ) );
 
-        if ( ! $opt_groups || ! \array_keys( $this->opts ) ) {
+        if ( ! $opt_groups && ! \array_keys( $this->opts ) ) {
             return;
         }
 
