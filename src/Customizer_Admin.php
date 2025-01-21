@@ -142,6 +142,8 @@ final class Customizer_Admin {
      * Add panels for the custom product tabs.
      */
     public function add_panels(): void {
+        global $product_object;
+
         foreach ( $this->tabs as $key => $tab ) {
             $classes = array( 'panel' );
             $classes = \array_unique( \array_merge( $tab['panel'], $classes ) );
@@ -154,7 +156,13 @@ final class Customizer_Admin {
                 \esc_attr( 'display: none;' ),
             );
 
-            \do_action( "xwc_product_options_{$key}" );
+            /**
+             * Enable other plugins to add their own product options to the custom product tab
+             *
+             * @param \WC_Product $product_object Product object.
+             * @since 1.1.0
+             */
+            \do_action( "xwc_product_options_{$key}", $product_object );
 
             echo '</div>';
         }
